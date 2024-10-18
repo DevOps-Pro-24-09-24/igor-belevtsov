@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-import re
+
 import sys
 from subprocess import check_output
 
+# Get the commit message file path
 commit_msg_filepath = sys.argv[1]
-branch = (
+
+# Get the current branch name
+branch_name = (
     check_output(["git", "symbolic-ref", "--short", "HEAD"]).decode("utf-8").strip()
 )
 
-regex = r"^[a-z]{1,9}-[0-9]{1,6}"
+# Create the prefix based on the branch name
+prefix = f"{branch_name}"
 
-found_obj = re.match(regex, branch)
-
-if found_obj:
-    prefix = found_obj.group(0)
-    with open(commit_msg_filepath, "r+") as f:
-        commit_msg = f.read()
-        if commit_msg.find(prefix) == -1:
-            f.seek(0, 0)
-            f.write(f"{prefix}: {commit_msg}")
+# Read the existing commit message
+with open(commit_msg_filepath, "r+") as f:
+    commit_msg = f.read()
+    # If the commit message doesn't already start with the branch name as the prefix
+    if not commit_msg.startswith(prefix):
+        f.seek(0, 0)  # Go to the beginning of the file
+        f.write(f"{prefix}: {commit_msg}")  # Add the prefix to the commit message
