@@ -13,8 +13,7 @@ regex = r"^[a-z]{1,9}-[0-9]{1,6}"
 found_obj = re.match(regex, branch)
 
 if found_obj:
-    prefix = "DJ-000001"
-    # prefix = found_obj.group(0) # For automation prefix extraction from current branch name use this line instead of above
+    prefix = found_obj.group(0)
     with open(commit_msg_filepath, "r+") as f:
         commit_msg = f.read()
         if commit_msg.find(prefix) == -1:
