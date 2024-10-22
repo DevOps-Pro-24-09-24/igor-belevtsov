@@ -1,4 +1,4 @@
-# MariaDB installation on backend instance from VPC.md
+# Bonus tasks
 
 ## MariaDB installation process:
 Create a script file 'install-mariadb.sh' to execute MariaDB installation with next content:
