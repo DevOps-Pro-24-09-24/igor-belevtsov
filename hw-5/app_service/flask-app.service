@@ -1,0 +1,21 @@
+[Unit]
+Description=Flask Application Service
+After=network.target
+
+[Service]
+User=ubuntu  # Or replace with the user under which you want to run the app
+WorkingDirectory=/opt/flask-alb-app  # Path to the application directory
+ExecStart=/usr/bin/python3 /opt/flask-alb-app/app.py  # Command to start the app
+
+# Environment variables (optional)
+Environment="FLASK_APP=/opt/flask-alb-app/app.py"
+Environment="FLASK_ENV=production"
+Environment="DB_HOST=DB_AMI_IP_OR_DNS" # Replace `DB_AMI_IP_OR_DNS` with the private IP or DNS of the DB instance in production.
+Environment="DB_USER=$(aws ssm get-parameter --name "/app/DB_USER" --with-decryption --query "Parameter.Value" --output text)"
+Environment="DB_PASSWORD=$(aws ssm get-parameter --name "/app/DB_USER_PASS" --with-decryption --query "Parameter.Value" --output text)"  # Set actual credentials
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
