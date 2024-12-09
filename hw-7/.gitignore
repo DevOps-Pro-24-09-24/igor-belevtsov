@@ -4,4 +4,3 @@ packer/variables.pkr.hcl
 .terraform/*
 .terraform*
 terraform.tfstate*
-.vscode/*
