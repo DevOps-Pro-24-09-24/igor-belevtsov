@@ -1,0 +1,47 @@
+- name: Setup Flask Application
+  hosts: all
+  become: yes
+
+  vars:
+    python_version: "{{ python_version }}"
+    flask_app_dir: "{{ flask_app_dir }}"
+
+  tasks:
+    - name: Ensure the system is updated
+      apt:
+        update_cache: yes
+
+    - name: Install Python and pip
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - python{{ python_version }}
+        - python{{ python_version }}-venv
+        - python3-pip
+
+    - name: Create application directory
+      file:
+        path: "{{ flask_app_dir }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Create a Python virtual environment
+      command: python3 -m venv venv
+      args:
+        chdir: "{{ flask_app_dir }}"
+      register: venv_creation
+
+    - name: Install Flask in the virtual environment
+      command: "{{ flask_app_dir }}/venv/bin/pip install flask"
+      when: venv_creation is succeeded
+
+    - name: Open firewall for Flask application (default port 5000)
+      community.general.ufw:
+        rule: allow
+        port: 5000
+        proto: tcp
+
+- import_playbook: deploy.yml

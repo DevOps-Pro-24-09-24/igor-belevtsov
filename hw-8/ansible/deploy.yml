@@ -1,0 +1,68 @@
+---
+- name: Deploy Flask Application
+  hosts: app_servers
+  become: yes
+
+  vars:
+    repo_url: "{{ repo_url }}"
+    repo_branch: "{{ repo_branch }}"
+    app_subdir: "{{ app_subdir }}"
+    flask_app_dir: "{{ flask_app_dir }}"
+    flask_service_name: "{{ flask_service_name }}"
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - git
+        state: present
+
+    - name: Clone the application repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ flask_app_dir }}"
+        version: "{{ repo_branch }}"
+        force: yes
+
+    - name: Ensure the application directory contains only the app files
+      command: mv "{{ flask_app_dir }}/{{ app_subdir }}/*" "{{ flask_app_dir }}/"
+      args:
+        removes: "{{ flask_app_dir }}/app.py"
+        chdir: "{{ flask_app_dir }}"
+      when: "'{{ app_subdir }}' in ansible_facts['files']['{{ flask_app_dir }}']"
+
+    - name: Install application dependencies
+      command: "{{ flask_app_dir }}/venv/bin/pip install -r requirements.txt"
+      args:
+        chdir: "{{ flask_app_dir }}"
+
+    - name: Create a systemd service file for Flask app
+      copy:
+        dest: /etc/systemd/system/{{ flask_service_name }}.service
+        content: |
+          [Unit]
+          Description=Flask Application
+          After=network.target
+
+          [Service]
+          User=www-data
+          Group=www-data
+          WorkingDirectory={{ flask_app_dir }}
+          ExecStart={{ flask_app_dir }}/venv/bin/python {{ flask_app_dir }}/app.py
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Enable Flask service to start on boot
+      service:
+        name: "{{ flask_service_name }}"
+        enabled: yes
+
+    - name: Start Flask application service
+      service:
+        name: "{{ flask_service_name }}"
+        state: started
