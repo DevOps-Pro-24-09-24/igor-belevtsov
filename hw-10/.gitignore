@@ -1,8 +1,8 @@
 .DS_Store
 *.pem
-*/packer/variables.pkr.hcl
+packer/variables.pkr.hcl
 .terraform/*
 .terraform*
 terraform.tfstate*
-.vscode/*
 .vscode
+.vscode/*
