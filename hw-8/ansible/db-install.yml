@@ -1,0 +1,64 @@
+---
+- name: Setup MySQL Database
+  hosts: all
+  become: yes
+
+  vars:
+    mysql_root_password: "{{ mysql_root_password }}"
+    mysql_app_user: "{{ mysql_app_user }}"
+    mysql_app_user_password: "{{ mysql_app_user_password }}"
+    mysql_database: "{{ mysql_database }}"
+
+  tasks:
+    - name: Install packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - mysql-server
+        - python3-pymysql
+
+    - name: Ensure MySQL is running
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Set MySQL bind-address to 0.0.0.0
+      lineinfile:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        regexp: '^bind-address\s*=.*'
+        line: 'bind-address = 0.0.0.0'
+        backup: yes
+
+    - name: Set MySQL root password
+      community.mysql.mysql_user:
+        login_user: root
+        login_password: ""
+        user: root
+        password: "{{ mysql_root_password }}"
+        state: present
+
+    - name: Create application database
+      community.mysql.mysql_db:
+        name: "{{ mysql_database }}"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Create application user
+      community.mysql.mysql_user:
+        name: "{{ mysql_app_user }}"
+        password: "{{ mysql_app_user_password }}"
+        priv: "{{ mysql_database }}.*:ALL"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      notify: Restart MySQL
+
+  handlers:
+    - name: Restart MySQL
+      service:
+        name: mysql
+        state: restarted
+        enabled: true
