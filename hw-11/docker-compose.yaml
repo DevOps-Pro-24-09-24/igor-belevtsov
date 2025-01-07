@@ -1,0 +1,78 @@
+services:
+  flask:
+    image: ${APP_IMAGE_NAME}:${APP_IMAGE_TAG}
+    container_name: flask
+    networks:
+      - internal
+    volumes:
+      - ./app/app.py:/app/app.py:ro
+    environment:
+      FLASK_ENV: development
+      DB_HOST: mysql
+      DB_USER: ${MYSQL_USER:-flask-app}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-flaskpassword}
+      DB_NAME: ${MYSQL_DATABASE:-flaskdb}
+    depends_on:
+      mysql:
+        condition: service_healthy
+        restart: true
+
+  mysql:
+    image: ${DB_IMAGE_NAME}:${DB_IMAGE_TAG}
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-flaskdb}
+      MYSQL_USER: ${MYSQL_USER:-flask-app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-flaskpassword}
+    networks:
+      - internal
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    networks:
+      - external
+      - internal
+    ports:
+      - "8443:443"
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      flask:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:latest
+    networks:
+      - external
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 8888:8080
+    restart: unless-stopped
+
+networks:
+  internal:
+  external:
+
+volumes:
+  db_data:
