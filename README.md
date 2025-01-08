@@ -10,4 +10,5 @@ hw-7 : Terraform basic infrastructure with RDS \
 hw-8 : AWS AMI with Packer and Ansible as provisioner \
 hw-9 : Ansible roles \
 hw-10 : Simple Docker compose project \
-hw-11 : Simple Docker compose project 2
+hw-11 : Simple Docker compose project 2 \
+hw-12 : Jankins configuration
