@@ -4,7 +4,6 @@
 .terraform/*
 .terraform*
 terraform.tfstate*
-.vscode/*
 .vscode
 .codegpt/
 *.crt
