@@ -5,4 +5,7 @@
 .terraform*
 terraform.tfstate*
 .vscode
-.codegpt
+.codegpt/
+*.crt
+*.key
+/hw-11/nginx/certs/
