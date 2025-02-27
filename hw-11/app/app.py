@@ -9,10 +9,10 @@ app = Flask(__name__)
 def get_db_connection():
     try:
         connection = mysql.connector.connect(
-            host=os.environ["DB_HOST"],
-            user=os.environ["DB_USER"],
-            password=os.environ["DB_PASSWORD"],
-            database=os.environ["DB_NAME"],
+            host=os.environ["MYSQL_HOST"],
+            user=os.environ["MYSQL_USER"],
+            password=os.environ["MYSQL_PASSWORD"],
+            database=os.environ["MYSQL_DB"],
         )
         return connection
     except Error as e:

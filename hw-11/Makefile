@@ -12,7 +12,7 @@ DC := CURRENT_USER=${CURRENT_ID}:${CURRENT_GROUP} docker compose -p $(PROJECT_NA
 
 
 build:
-	@$(D) build -f app/Dockerfile -t $(APP_IMAGE_NAME):$(APP_IMAGE_TAG) -t $(APP_IMAGE_NAME):latest app/
+	@$(D) build --platform=linux/amd64 -f app/Dockerfile -t $(APP_IMAGE_NAME):$(APP_IMAGE_TAG) -t $(APP_IMAGE_NAME):latest app/
 
 push:
 	@$(D) push $(APP_IMAGE_NAME):$(APP_IMAGE_TAG)

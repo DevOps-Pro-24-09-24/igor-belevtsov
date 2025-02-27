@@ -6,7 +6,7 @@ RUN apt update && \
 
 WORKDIR /app
 
-ADD requirements.txt ./
+ADD app.py requirements.txt ./
 
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -14,4 +14,4 @@ EXPOSE 5000
 
 HEALTHCHECK --interval=5s --timeout=5s --retries=3 CMD curl -f http://localhost:5000/health || exit 1
 
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+ENTRYPOINT ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql
+  namespace: hw-13
+data:
+  init.sql: |
+    GRANT ALL ON flaskdb TO 'flask-app'@'%';
+    FLUSH PRIVILEGES;
+
+    USE flaskdb;
+
+    CREATE TABLE users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) NOT NULL
+    );

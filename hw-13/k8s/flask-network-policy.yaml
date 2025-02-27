@@ -1,0 +1,39 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: flask-network-policy
+  namespace: hw-13
+spec:
+  endpointSelector:
+    matchLabels:
+      app: flask
+  ingress:
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "5000"
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - cluster
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app: mysql
+      toPorts:
+        - ports:
+            - port: "3306"
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              - matchPattern: "*"
+    - toEntities:
+        - world
