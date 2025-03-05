@@ -1,0 +1,11 @@
+---
+# vars/debian.yml - Debian-specific variables
+
+mysql_packages:
+  - mysql-community-server
+  - mysql-client
+
+mysql_service_name: mysql
+mysql_config_file: /etc/mysql/mysql.conf.d/mysqld.cnf
+mysql_socket: /var/run/mysqld/mysqld.sock
+mysql_datadir: /var/lib/mysql

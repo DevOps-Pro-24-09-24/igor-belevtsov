@@ -1,0 +1,29 @@
+---
+# tasks/fedora.yml - Fedora/RedHat-specific tasks for mysql_setup role
+
+- name: Install MySQL packages (Fedora/RHEL)
+  dnf:
+    name:
+      - "{{ mysql_packages }}"
+      - python3-PyMySQL  # Required for Ansible MySQL modules
+    state: present
+
+- name: Initialize MySQL database (if needed)
+  command: "{{ mysql_initialize_command }}"
+  args:
+    creates: "{{ mysql_datadir }}/mysql"
+  when: mysql_initialize_command is defined
+
+- name: Start temporary MySQL server for initial setup
+  shell: "{{ mysql_safe_start }} &"
+  args:
+    creates: "/var/run/mysqld/mysqld.pid"
+  when: mysql_initialize_command is defined
+  register: mysql_start
+
+- name: Wait for MySQL to start
+  wait_for:
+    path: "{{ mysql_socket }}"
+    state: present
+    timeout: 30
+  when: mysql_initialize_command is defined and mysql_start.changed

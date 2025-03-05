@@ -1,0 +1,35 @@
+# roles/mariadb/templates/mariadb_debian.cnf.j2
+[mysqld]
+bind-address = {{ mariadb_bind_address }}
+port = {{ mariadb_port }}
+datadir = {{ mariadb_datadir }}
+
+# Performance settings
+max_connections = {{ mariadb_max_connections }}
+innodb_buffer_pool_size = {{ mariadb_innodb_buffer_pool_size }}
+
+# Character set
+character-set-server = {{ flask_db_charset }}
+collation-server = {{ flask_db_charset }}_unicode_ci
+
+# InnoDB settings
+innodb_file_per_table = ON
+innodb_flush_log_at_trx_commit = 1
+innodb_log_buffer_size = 16M
+
+# Logging
+log_error = /var/log/mysql/error.log
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/mariadb-slow.log
+long_query_time = 10
+
+# Security settings
+{% if mariadb_disallow_remote_root_login %}
+skip-networking = 0
+{% endif %}
+
+[mysqldump]
+max_allowed_packet = 64M
+
+[mysql]
+default-character-set = {{ flask_db_charset }}

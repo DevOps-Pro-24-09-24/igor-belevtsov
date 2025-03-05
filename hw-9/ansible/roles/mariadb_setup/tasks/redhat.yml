@@ -1,0 +1,24 @@
+# roles/mariadb_setup/tasks/install_redhat.yml
+---
+- name: Add MariaDB repository for RedHat
+  yum_repository:
+    name: mariadb
+    description: MariaDB Repository
+    baseurl: "https://yum.mariadb.org/{{ mariadb_version }}/{{ ansible_distribution|lower }}/{{ ansible_distribution_major_version }}/x86_64"
+    gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+    gpgcheck: yes
+  become: true
+
+- name: Install MariaDB packages for RedHat
+  yum:
+    name: "{{ mariadb_packages }}"
+    state: present
+  become: true
+
+- name: Permanently enable mariadb service, also enable it immediately if possible
+  ansible.posix.firewalld:
+    port: 3306/tcp
+    state: enabled
+    permanent: true
+    immediate: true
+    offline: true

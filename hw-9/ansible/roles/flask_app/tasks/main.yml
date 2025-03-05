@@ -1,0 +1,106 @@
+---
+# roles/flask_app/tasks/main.yml - Main tasks file for flask_app role
+
+- name: Gather facts for OS detection
+  setup:
+    gather_subset:
+      - "!all"
+      - "!min"
+      - "os_family"
+
+# - name: Include OS-specific variables
+#   include_vars: "{{ item }}"
+#   with_first_found:
+#     - "{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version }}.yml"
+#     - "{{ ansible_os_family|lower }}.yml"
+#     - "main.yml"
+
+- name: Include Debian specific tasks
+  include_tasks: "{{ ansible_os_family|lower }}.yml"
+
+- name: Create application user
+  user:
+    name: "{{ app_user }}"
+    group: "{{ app_group }}"
+    system: yes
+    shell: "/bin/bash"
+    # createhome: yes
+    home: "{{ app_directory }}"
+
+- name: Create application directory structure
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0755
+  with_items:
+    - "{{ app_directory }}"
+    - "{{ app_directory }}/static"
+    - "{{ app_directory }}/templates"
+    - "{{ app_directory }}/app"
+
+# Uncomment if using Git repository
+# - name: Clone application from git repository
+#   git:
+#     repo: "{{ app_repo }}"
+#     dest: "{{ app_directory }}"
+#     version: "{{ app_version }}"
+#   become: yes
+#   become_user: "{{ app_user }}"
+
+- name: Create virtual environment
+  pip:
+    name: pip
+    virtualenv: "{{ virtual_env }}"
+    virtualenv_command: "python{{ python_version }} -m venv"
+  become_user: "{{ app_user }}"
+
+- name: Create requirements.txt file
+  template:
+    src: requirements.txt.old.j2
+    # src: requirements.txt.j2
+    dest: "{{ requirements_file }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0644
+
+- name: Install Python packages
+  pip:
+    requirements: "{{ requirements_file }}"
+    virtualenv: "{{ virtual_env }}"
+  become_user: "{{ app_user }}"
+
+- name: Create Flask application files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0644
+  with_items:
+    # - { src: 'config.py.j2', dest: '{{ app_directory }}/config.py' }
+    # - { src: 'wsgi.py.j2', dest: '{{ app_directory }}/wsgi.py' }
+    # - { src: 'app.py.j2', dest: '{{ app_directory }}/app/__init__.py' }
+    - { src: 'app.py.old.j2', dest: '{{ app_directory }}/app.py' }
+
+- name: Create systemd service file
+  template:
+    src: flask_app.service.old.j2
+    # src: flask_app.service.j2
+    dest: "/etc/systemd/system/{{ app_name }}.service"
+    owner: root
+    group: root
+    mode: 0644
+  notify: reload systemd
+
+- name: Enable and start Flask application service
+  systemd:
+    name: "{{ app_name }}"
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+
+- name: Set up Nginx as reverse proxy
+  include_tasks: nginx_setup.yml
+  when: use_nginx | bool

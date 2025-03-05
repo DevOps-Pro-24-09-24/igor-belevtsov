@@ -1,0 +1,41 @@
+# playbook.yml - Main playbook that uses all roles
+---
+
+- name: Deploy SSH keys to all hosts
+  hosts: all
+  gather_facts: false
+  become: true
+
+  roles:
+    - role: ssh_key_deployment
+      tags: [ssh]
+
+- name: Install and configure MySQL/MariaDB on database servers
+  hosts: db_servers
+  become: true
+  vars:
+    # Override defaults
+    flask_db_password: "UserPassw0rd"
+    mariadb_root_password: "RoOtPassw0rd"
+    mariadb_bind_address: "0.0.0.0"  # If you need remote access
+
+  roles:
+    - role: mariadb_setup
+      tags: [mariadb]
+
+# TODO: under development, dont use
+# - name: Install and configure MySQL on database servers
+#   hosts: db_servers
+#   become: true
+
+#   roles:
+#     - role: mysql_setup
+#       tags: [mysql]
+
+- name: Deploy Flask application on web servers
+  hosts: web_servers
+  become: true
+
+  roles:
+    - role: flask_app
+      tags: [app]

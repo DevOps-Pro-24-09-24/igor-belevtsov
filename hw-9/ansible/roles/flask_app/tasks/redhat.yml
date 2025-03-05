@@ -1,0 +1,48 @@
+---
+# roles/flask_app/tasks/redhat.yml - RedHat-specific tasks for flask_app role
+
+- name: Install required packages (Fedora/RHEL)
+  dnf:
+    name:
+      - "python{{ python_version }}"
+      - "python{{ python_version }}-devel"
+      - "python{{ python_version }}-pip"
+      - "gcc"
+      - "openssl-devel"
+      - "libffi-devel"
+      # - "mysql-devel"
+      - "git"
+    state: present
+
+- name: Install Nginx (if needed)
+  dnf:
+    name: nginx
+    state: present
+  when: use_nginx | bool
+
+- name: Create application group
+  group:
+    name: "{{ app_group }}"
+    system: yes
+    state: present
+
+- name: Allow app service port in firewalld
+  ansible.posix.firewalld:
+    service: http
+    state: enabled
+    permanent: true
+    immediate: true
+    offline: true
+
+- name: Allow app to listen on tcp port 5000
+  community.general.seport:
+    ports: 5000
+    proto: tcp
+    setype: http_port_t
+    state: present
+
+- name: Allow Nginx to connect to local ports
+  ansible.posix.seboolean:
+    name: httpd_can_network_connect
+    state: true
+    persistent: true

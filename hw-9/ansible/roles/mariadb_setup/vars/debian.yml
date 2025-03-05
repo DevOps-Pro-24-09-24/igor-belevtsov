@@ -1,0 +1,9 @@
+# roles/mariadb/vars/debian.yml
+---
+mariadb_packages_debian:
+  - mariadb-server
+  - mariadb-client
+  - python3-pymysql
+  - python3-mysqldb
+
+mariadb_socket: /var/run/mysqld/mysqld.sock
