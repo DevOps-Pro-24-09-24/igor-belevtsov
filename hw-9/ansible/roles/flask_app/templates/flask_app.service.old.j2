@@ -1,0 +1,17 @@
+[Unit]
+Description=Flask Application Service
+After=network.target
+
+[Service]
+User={{ app_user }}
+WorkingDirectory={{ app_directory }}
+ExecStart=/bin/bash -c 'source {{ app_directory }}/venv/bin/activate && exec python{{ python_version }} {{ app_directory}}/app.py'
+
+StandardOutput=journal
+StandardError=journal
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

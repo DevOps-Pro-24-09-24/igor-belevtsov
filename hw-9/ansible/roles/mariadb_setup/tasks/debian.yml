@@ -1,0 +1,43 @@
+# roles/mariadb/tasks/install_debian.yml
+---
+- name: Install prerequisite packages for Debian
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - gnupg2
+    state: present
+  become: true
+
+- name: Add MariaDB apt key
+  apt_key:
+    url: https://mariadb.org/mariadb_release_signing_key.asc
+    state: present
+  become: true
+
+- name: Add MariaDB repository for Debian
+  apt_repository:
+    repo: "deb [arch=amd64] http://mirror.mva-n.net/mariadb/repo/{{ mariadb_version }}/debian {{ ansible_distribution_release }} main"
+    state: present
+    filename: mariadb
+  become: true
+  when: ansible_distribution == "Debian"
+
+- name: Add MariaDB repository for Ubuntu
+  apt_repository:
+    repo: "deb [arch=amd64] http://mirror.mva-n.net/mariadb/repo/{{ mariadb_version }}/ubuntu {{ ansible_distribution_release }} main"
+    state: present
+    filename: mariadb
+  become: true
+  when: ansible_distribution == "Ubuntu"
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: true
+
+- name: Install MariaDB packages for Debian
+  apt:
+    name: "{{ mariadb_packages }}"
+    state: present
+  become: true

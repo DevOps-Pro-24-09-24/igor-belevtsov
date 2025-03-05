@@ -1,0 +1,80 @@
+---
+# tasks/main.yml - Main tasks file for mysql_setup role
+
+- name: Gather facts for OS detection
+  setup:
+    gather_subset:
+      - "!all"
+      - "!min"
+      - "os_family"
+
+- name: Include OS-specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_os_family | lower }}.yml"
+    - "default.yml"
+
+- name: Include Debian specific tasks
+  include_tasks: debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: Include Fedora/RedHat specific tasks
+  include_tasks: fedora.yml
+  when: ansible_os_family == "RedHat"
+
+- name: Ensure MySQL service is started and enabled
+  service:
+    name: "{{ mysql_service_name }}"
+    state: started
+    enabled: yes
+
+- name: Create .my.cnf file for root
+  template:
+    src: root-my.cnf.j2
+    dest: /root/.my.cnf
+    owner: root
+    group: root
+    mode: 0600
+  no_log: true
+  notify: Restart MySQL
+
+- name: Create MySQL configuration file
+  template:
+    src: my.cnf.j2
+    dest: "{{ mysql_config_file }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify: Restart MySQL
+
+# - name: Set MySQL root password
+#   mysql_user:
+#     name: root
+#     password: "{{ mysql_root_password }}"
+#     host_all: yes
+#     login_unix_socket: "{{ mysql_socket }}"
+#     # plugin: caching_sha2_password
+#     # plugin: mysql_native_password
+#     column_case_sensitive: true
+#   # no_log: true
+#   become: true
+
+- name: Create MySQL databases
+  mysql_db:
+    name: "{{ item.name }}"
+    encoding: "{{ item.encoding | default('utf8') }}"
+    collation: "{{ item.collation | default('utf8_general_ci') }}"
+    state: present
+  with_items: "{{ mysql_databases }}"
+
+- name: Create MySQL users
+  mysql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    host: "{{ item.host | default('%') }}"
+    priv: "{{ item.priv | default('*.*:USAGE') }}"
+    state: present
+    column_case_sensitive: true
+    plugin: caching_sha2_password
+  with_items: "{{ mysql_users }}"
+  # no_log: true

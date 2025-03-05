@@ -1,0 +1,152 @@
+from flask import Flask, jsonify, render_template
+from flask_sqlalchemy import SQLAlchemy
+from config import config
+
+db = SQLAlchemy()
+
+def create_app(config_name):
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])
+
+    db.init_app(app)
+
+    from app.models import User
+
+    @app.route('/')
+    def index():
+        return render_template('index.html')
+
+    @app.route('/api/users')
+    def get_users():
+        users = User.query.all()
+        return jsonify([user.to_dict() for user in users])
+
+    @app.route('/api/health')
+    def health_check():
+        try:
+            db.session.execute('SELECT 1')
+            return jsonify({"status": "healthy", "database": "connected"})
+        except Exception as e:
+            return jsonify({"status": "unhealthy", "database": str(e)}), 500
+
+    @app.cli.command("init-db")
+    def init_db():
+        """Create database tables."""
+        db.create_all()
+        print("Database tables created.")
+
+    with app.app_context():
+        db.create_all()
+
+    return app
+
+# Create app/models.py as well
+with open(__file__.replace('__init__.py', 'models.py'), 'w') as f:
+    f.write('''from app import db
+from datetime import datetime
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<User {self.username}>'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'created_at': self.created_at.isoformat()
+        }
+''')
+
+# Create a basic index.html template
+import os
+os.makedirs(__file__.replace('__init__.py', '../templates'), exist_ok=True)
+with open(__file__.replace('__init__.py', '../templates/index.html'), 'w') as f:
+    f.write('''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }}</title>
+    {% raw %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% endraw %}
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to {{ app_name }}</h1>
+        <p>Connected to MySQL database at {{ db_host }}.</p>
+        <div id="users">
+            <h2>Users</h2>
+            <div id="user-list">Loading...</div>
+        </div>
+    </div>
+    <script>
+        fetch('/api/users')
+            .then(response => response.json())
+            .then(users => {
+                const userList = document.getElementById('user-list');
+                if (users.length === 0) {
+                    userList.innerHTML = '<p>No users found.</p>';
+                } else {
+                    userList.innerHTML = '<ul>' +
+                        users.map(user => `<li>${user.username} (${user.email})</li>`).join('') +
+                        '</ul>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('user-list').innerHTML =
+                    '<p>Error loading users: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>''')
+
+# Create a basic CSS file
+os.makedirs(__file__.replace('__init__.py', '../static'), exist_ok=True)
+with open(__file__.replace('__init__.py', '../static/style.css'), 'w') as f:
+    f.write('''body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    background-color: #f4f4f4;
+}
+
+.container {
+    width: 80%;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin-top: 2rem;
+    border-radius: 5px;
+}
+
+h1 {
+    color: #2c3e50;
+}
+
+h2 {
+    color: #3498db;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+li:last-child {
+    border-bottom: none;
+}''')

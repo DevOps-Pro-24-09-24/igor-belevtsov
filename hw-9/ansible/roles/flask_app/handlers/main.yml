@@ -1,0 +1,16 @@
+---
+# roles/flask_app/handlers/main.yml - Handlers for flask_app role
+
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+# - name: restart Flask application
+#   systemd:
+#     name: "{{ app_name }}"
+#     state: restarted
+
+- name: reload Nginx
+  service:
+    name: nginx
+    state: reloaded

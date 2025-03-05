@@ -1,0 +1,39 @@
+# roles/flask_app/defaults/main.yml - Default variables for flask_app role
+---
+
+# Application settings
+app_name: "flask_app"
+app_directory: "/opt/{{ app_name }}"
+app_user: "flask"
+app_group: "flask"
+app_port: 5000
+app_environment: "production"
+
+# Git repository for application code
+# app_repo: "https://github.com/yourusername/flask-example.git"
+# app_version: "main"
+
+# Python settings
+python_version: "3"
+virtual_env: "{{ app_directory }}/venv"
+requirements_file: "{{ app_directory }}/requirements.txt"
+
+# Database connection
+db_name: "flask_app"
+db_user: "flask_user"
+db_password: "UserPassw0rd"
+db_host: "{{ groups['db_servers'][0] }}"  # Using first database server by default
+db_port: 3306
+
+# Web server configuration
+use_nginx: true
+server_name: "{{ ansible_fqdn }}.elysium-space.com"
+nginx_config_debian: "/etc/nginx/sites-available/{{ app_name }}.conf"
+nginx_config_redhat: "/etc/nginx/conf.d/{{ app_name }}.conf"
+nginx_enabled: "/etc/nginx/sites-enabled/{{ app_name }}"
+nginx_server_config_redhat: "/etc/nginx/nginx.conf"
+
+# SSL configuration
+use_ssl: false
+ssl_cert: "/etc/ssl/certs/{{ server_name }}.crt"
+ssl_key: "/etc/ssl/private/{{ server_name }}.key"

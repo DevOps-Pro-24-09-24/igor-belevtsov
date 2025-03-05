@@ -1,0 +1,13 @@
+---
+# vars/redhat.yml - Fedora/RedHat-specific variables
+
+mysql_packages:
+  - mariadb-server
+  # - mysql-server
+
+mysql_service_name: mariadb
+mysql_config_file: /etc/my.cnf.d
+mysql_socket: /var/lib/mysql/mysql.sock
+mysql_datadir: /var/lib/mysql
+mysql_initialize_command: "mysqld --initialize --user=mysql --datadir={{ mysql_datadir }}"
+mysql_safe_start: "/usr/bin/mysqld --datadir={{ mysql_datadir }}"

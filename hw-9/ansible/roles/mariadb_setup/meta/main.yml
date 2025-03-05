@@ -1,0 +1,27 @@
+# roles/mariadb_setup/meta/main.yml - Metadata for mysql_setup role
+---
+
+galaxy_info:
+  role_name: mariadb_setup
+  author: Igor Belevtsov
+  description: Installs and configures MariaDB database server
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+    - name: Centos
+      versions:
+        - all
+    - name: EL
+      versions:
+        - all
+
+  galaxy_tags:
+    - database
+    - mysql
+    - mariadb
+    - web
+
+dependencies: []

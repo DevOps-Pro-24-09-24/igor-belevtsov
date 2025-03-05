@@ -1,0 +1,29 @@
+---
+# roles/flask_app/meta/main.yml - Metadata for flask_app role
+
+galaxy_info:
+  role_name: flask_app
+  author: Igor Belevtsov
+  description: Deploys Flask application with MySQL/MariaDB database connection
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+    - name: Fedora
+      versions:
+        - all
+    - name: EL
+      versions:
+        - all
+
+  galaxy_tags:
+    - web
+    - python
+    - flask
+
+dependencies: []

@@ -1,0 +1,19 @@
+[mysqld]
+bind-address = {{ mysql_bind_address }}
+port = {{ mysql_port }}
+datadir = {{ mysql_datadir }}
+
+# Performance tuning
+max_connections = {{ mysql_max_connections }}
+innodb_buffer_pool_size = {{ mysql_innodb_buffer_pool_size }}
+
+# Security
+local-infile = 0
+
+# Character set and collation
+character-set-server = utf8mb4
+collation-server = utf8mb4_general_ci
+
+[client]
+port = {{ mysql_port }}
+default-character-set = utf8mb4

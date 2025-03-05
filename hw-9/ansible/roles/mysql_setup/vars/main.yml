@@ -1,0 +1,5 @@
+---
+# vars/main.yml - Variables that shouldn't be overridden
+
+# Empty placeholder file
+# OS-specific variables will be included from debian.yml and fedora.yml

@@ -1,0 +1,72 @@
+# MariaDB Setup Role
+
+An Ansible role to install and configure MySQL/MariaDB database server on various Linux distributions.
+
+## Features
+
+- Automatically detects OS type (Debian/Ubuntu or Fedora/RHEL)
+- Installs appropriate MySQL/MariaDB packages
+- Configures MySQL/MariaDB with secure defaults
+- Creates databases and users
+- Creates tables schema
+- Sets up performance tuning parameters
+
+## Requirements
+
+- Ansible 2.9 or higher
+- Root access to target hosts
+
+## Role Variables
+
+Available variables are listed below, along with default values:
+
+```yaml
+# MariaDB configuration
+mariadb_version: "10.11"  # Version to install
+mariadb_bind_address: "127.0.0.1"  # Change to "0.0.0.0" to accept remote connections
+mariadb_port: 3306
+
+# Database settings for Flask application
+flask_db_name: "flask_app"
+flask_db_user: "flask_user"
+flask_db_password: "your_secure_password"
+flask_db_host: "{{ groups['db_servers'][0] }}" # Using first database server by default
+flask_db_charset: "utf8mb4"
+flask_app_host: "{{ groups['web_servers'][0] }}"
+
+# Performance settings
+mariadb_max_connections: 200
+mariadb_innodb_buffer_pool_size: "256M"  # Adjust based on available memory
+
+# Security settings
+mariadb_root_password: "your_secure_root_password"
+mariadb_remove_test_database: true
+mariadb_disallow_remote_root_login: true
+
+# Backup settings
+mariadb_backup_enabled: true
+mariadb_backup_dir: "/var/backups/mysql"
+mariadb_backup_frequency: "daily"  # Options: hourly, daily, weekly
+mariadb_backup_retention: 7  # Number of backups to keep
+
+# System settings
+mariadb_datadir: "/var/lib/mysql"
+```
+
+## Example Playbook
+
+```yaml
+---
+- name: Deploy MySQL
+  hosts: db_servers
+  roles:
+    - mysql_setup
+```
+
+## Security Note
+
+For production use, it's recommended to store passwords in ansible-vault rather than in plaintext.
+
+## License
+
+MIT

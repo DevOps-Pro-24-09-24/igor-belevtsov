@@ -1,0 +1,25 @@
+---
+# tasks/debian.yml - Debian-specific tasks for mysql_setup role
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install MySQL packages (Debian/Ubuntu)
+  apt:
+    name:
+      - "{{ mysql_packages }}"
+      - python3-mysqldb  # Required for Ansible MySQL modules
+    state: present
+
+- name: Set debconf settings for non-interactive installation
+  debconf:
+    name: mysql-server
+    question: "{{ item.question }}"
+    value: "{{ item.value }}"
+    vtype: "{{ item.vtype }}"
+  with_items:
+    - { question: 'mysql-server/root_password', value: "{{ mysql_root_password }}", vtype: 'password' }
+    - { question: 'mysql-server/root_password_again', value: "{{ mysql_root_password }}", vtype: 'password' }
+  no_log: true

@@ -1,0 +1,14 @@
+# roles/ssh_key_deployment/defaults/main.yml - Default variables for ssh_key_setup role
+---
+
+# Path to your public SSH key file on the Ansible control node
+ssh_key_file: "~/.ssh/id_rsa.pub"
+
+# User to apply the SSH key to (will be set to root as requested)
+remote_user: "root"
+
+# Target SSH directory
+ssh_dir: "/root/.ssh"
+
+# SSH authorized_keys file
+authorized_keys_file: "{{ ssh_dir }}/authorized_keys"

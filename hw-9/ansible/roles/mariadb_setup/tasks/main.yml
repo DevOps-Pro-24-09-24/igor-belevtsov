@@ -1,0 +1,137 @@
+# roles/mariadb_setup/tasks/main.yml
+---
+# Set OS-specific variables
+- name: Include OS-specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version }}.yml"
+    - "{{ ansible_os_family|lower }}.yml"
+    - "main.yml"
+
+# Determine which OS family
+- name: Set platform specific variables
+  set_fact:
+    mariadb_service_name: "{{ 'mariadb' if ansible_os_family == 'RedHat' else 'mysql' }}"
+    mariadb_packages: "{{ mariadb_packages_redhat if ansible_os_family == 'RedHat' else mariadb_packages_debian }}"
+    mariadb_config_file: "{{ '/etc/my.cnf.d/server.cnf' if ansible_os_family == 'RedHat' else '/etc/mysql/mariadb.conf.d/50-server.cnf' }}"
+
+# Setup repositories
+- name: Include Debian installation tasks
+  include_tasks: "{{ ansible_os_family|lower }}.yml"
+
+# Configure MariaDB
+- name: Ensure MariaDB config directory exists
+  file:
+    path: "{{ mariadb_config_file | dirname }}"
+    state: directory
+    mode: 0755
+
+- name: Configure MariaDB server
+  template:
+    src: "mariadb_{{ ansible_os_family|lower }}.cnf.j2"
+    dest: "{{ mariadb_config_file }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart mariadb
+
+- name: Create .my.cnf file for root
+  template:
+    src: root-my.cnf.j2
+    dest: /root/.my.cnf
+    owner: root
+    group: root
+    mode: 0600
+  no_log: true
+  notify: restart mariadb
+
+- name: Ensure MariaDB service is enabled and started
+  service:
+    name: "{{ mariadb_service_name }}"
+    state: started
+    enabled: true
+
+# Secure the installation
+- name: Check if root password is set
+  command: mysql -u root -p{{ mariadb_root_password }} -e "SELECT 1"
+  register: mysql_root_check
+  ignore_errors: true
+  changed_when: false
+  no_log: true
+
+- name: Set MariaDB root password for the first time
+  shell: |
+    mysql_secure_installation <<EOF
+
+    y
+    {{ mariadb_root_password }}
+    {{ mariadb_root_password }}
+    y
+    y
+    y
+    y
+    EOF
+  when: mysql_root_check.rc != 0
+  no_log: true
+
+# Setup Flask database
+- name: Create MariaDB database for Flask application
+  mysql_db:
+    name: "{{ flask_db_name }}"
+    state: present
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+  no_log: true
+
+- name: Create MariaDB user for Flask application
+  mysql_user:
+    name: "{{ flask_db_user }}"
+    password: "{{ flask_db_password }}"
+    priv: "{{ flask_db_name }}.*:ALL"
+    host: "{{ flask_app_host }}"
+    state: present
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+  no_log: true
+
+- name: Create users table in MariaDB
+  community.mysql.mysql_query:
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+    login_db: "{{ flask_db_name }}"
+    query: >
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+# Setup backup if enabled
+- name: Create backup directory
+  file:
+    path: "{{ mariadb_backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+  when: mariadb_backup_enabled
+
+- name: Setup backup cron job
+  cron:
+    name: "Backup MariaDB databases"
+    job: "mysqldump --all-databases | gzip > {{ mariadb_backup_dir }}/backup-$(date +\\%Y\\%m\\%d\\%H\\%M\\%S).sql.gz"
+    hour: "1"
+    minute: "0"
+    user: root
+  when: mariadb_backup_enabled and mariadb_backup_frequency == 'daily'
+  no_log: true
+
+- name: Setup backup cleanup cron job
+  cron:
+    name: "Cleanup old MariaDB backups"
+    job: "find {{ mariadb_backup_dir }} -name 'backup-*.sql.gz' -type f -mtime +{{ mariadb_backup_retention }} -delete"
+    hour: "3"
+    minute: "0"
+    user: root
+  when: mariadb_backup_enabled

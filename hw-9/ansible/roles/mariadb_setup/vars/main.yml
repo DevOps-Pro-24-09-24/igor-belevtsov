@@ -1,0 +1,4 @@
+# roles/mariadb/vars/main.yml
+---
+# Variables applicable to all OS families
+# You can override these in your playbook vars

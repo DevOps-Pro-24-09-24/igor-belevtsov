@@ -1,0 +1,15 @@
+[Unit]
+Description={{ app_name }} Flask Application
+After=network.target
+
+[Service]
+User={{ app_user }}
+Group={{ app_group }}
+WorkingDirectory={{ app_directory }}
+Environment="PATH={{ virtual_env }}/bin"
+Environment="FLASK_APP=app"
+Environment="FLASK_ENV={{ app_environment }}"
+ExecStart={{ virtual_env }}/bin/gunicorn --workers 3 --bind 127.0.0.1:{{ app_port }} --chdir {{ app_directory }} wsgi:app
+
+[Install]
+WantedBy=multi-user.target

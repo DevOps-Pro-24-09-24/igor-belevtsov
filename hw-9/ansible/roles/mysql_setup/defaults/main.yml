@@ -1,0 +1,24 @@
+---
+# defaults/main.yml - Default variables for mysql_setup role
+
+# MySQL configuration
+mysql_root_password: "StrongP@ssw0rd"  # Consider using ansible-vault for production
+mysql_bind_address: "0.0.0.0"
+mysql_port: 3306
+
+# Database settings
+mysql_databases:
+  - name: flask_db
+    encoding: utf8
+    collation: utf8_general_ci
+
+# Database users
+mysql_users:
+  - name: flask_user
+    password: "UserP@ssw0rd"  # Consider using ansible-vault for production
+    host: "%"
+    priv: "flask_db.*:ALL"
+
+# Performance tuning
+mysql_max_connections: 151
+mysql_innodb_buffer_pool_size: "256M"

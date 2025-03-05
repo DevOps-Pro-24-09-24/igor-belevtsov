@@ -1,0 +1,39 @@
+---
+# roles/flask_app/tasks/debian.yml - Debian-specific tasks for flask_app role
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install required packages (Debian/Ubuntu)
+  apt:
+    name:
+      - "python{{ python_version }}"
+      - "python{{ python_version }}-venv"
+      - "python{{ python_version }}-dev"
+      - "python3-pip"
+      - "build-essential"
+      - "libssl-dev"
+      - "libffi-dev"
+      - "default-libmysqlclient-dev"
+      - "git"
+    state: present
+
+- name: Install Nginx (if needed)
+  apt:
+    name: nginx
+    state: present
+  when: use_nginx | bool
+
+- name: Create application group
+  group:
+    name: "{{ app_group }}"
+    system: yes
+    state: present
+
+# - name: Open firewall for Flask application (default port 5000)
+#   community.general.ufw:
+#     rule: allow
+#     port: 5000
+#     proto: tcp

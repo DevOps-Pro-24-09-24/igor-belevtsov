@@ -1,0 +1,20 @@
+# roles/ssh_key_deployment/meta/main.yml - Metadata for ssh_key_setup role
+---
+
+galaxy_info:
+  role_name: ssh_key_setup
+  author: Igor Belevtsov
+  description: Deploys SSH keys to remote hosts
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: GenericLinux
+      versions:
+        - all
+
+  galaxy_tags:
+    - ssh
+    - security
+    - system
+
+dependencies: []
